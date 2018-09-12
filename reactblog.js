@@ -2,7 +2,7 @@
 
 let h = React.createElement;
 
-let blogs = [
+const blogs = [
     {id: 1, author: 'Jim Smith',  'body': 'this is blog #1', title: 'blog1'},
     {id: 2, author: 'Tom', 'body':'this is blog #2', title: 'blog2'},
     {id: 3, author: 'Eartha Kitt', 'body': 'this is blog #3', title: 'blog3'}
@@ -19,24 +19,6 @@ let BlogBody = (props) =>
 let BlogTitle = (props) => 
     h('h2', { className: 'title' }, props.title);
 
-let deletePost = (props) => {
-    console.log(props.id);
-    blogs = blogs.filter(book => book.id !== props.id)
-    rerender();
-}
-
-let snakeify = (props) => {
-    let newBlogs = blogs.map(book => { 
-        if (book.id === props.id){
-            return Object.assign({}, book, { title: book.title + 's' })
-        } else {
-            return book
-        }
-    }) 
-    blogs = newBlogs;
-    rerender();
-}
-
 
 let BlogRow = (props) => 
     h('li', {
@@ -47,10 +29,10 @@ let BlogRow = (props) =>
         h(BlogAuthor, {author: props.blog.author}),
         h(BlogBody, {body: props.blog.body}),
         h('button', { 
-            onClick: () => deletePost(props.blog), 
+            onClick: () => props.deletePost(props.blog), 
             }, 'Delete Me!'),
         h('button', { 
-            onClick: () => snakeify(props.blog)
+            onClick: () => props.snakeify(props.blog)
         }, 'Change title'),
     ]);
 
@@ -58,18 +40,42 @@ let BlogRow = (props) =>
 
 let AllBlogs = (props) => h('ul', {}, 
     props.blogs.map((blog, i) => 
-        h(BlogRow, {blog, key: i})
+        h(BlogRow, { deletePost: props.deletePost, snakeify: props.snakeify, blog, key: i })
     )
 );
 
-let CreateBlogs = (props) => 
-    h('div', {}, [
-        h('h1', {}, ['All Blogs']),
-        h(AllBlogs, props)
-    ]);
+class HomePage extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        blogs: blogs
+      };
+    }
+  
+    render() {
+        let deletePost = (props) => {
+            console.log(props.id);
+            this.setState({
+            blogs: this.state.blogs.filter(book => book.id !== props.id)
+            })   
+        }
+        let snakeify = (props) => {
+            this.setState({ 
+                blogs: this.state.blogs.map(book =>  
+                (book.id === props.id) ?
+                    Object.assign({}, book, { title: book.title + 's' })
+                    :
+                    book
+                )
+            }) 
+        }
+        return h('div', {}, [
+            h('h1', {}, ['All Blogs']),
+            h(AllBlogs, { blogs: this.state.blogs, deletePost: deletePost, snakeify: snakeify })
+        ]);
+    }
+  }
 
 
+ReactDOM.render(h(HomePage, {blogs}), document.querySelector('.react-root'));
 
-let rerender = () => ReactDOM.render(h(CreateBlogs, {blogs}), document.querySelector('.react-root'));
-
-rerender();
